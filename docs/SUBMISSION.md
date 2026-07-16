@@ -1,7 +1,9 @@
 # Barre Core Coach — Certification Challenge Submission
 
 **An Agentic RAG assistant for barre *core* training.**
-Author: Aneeta Xavier · Due: July 16, 2026 · [GitHub repo](https://github.com/Aneeta-Xavier/barre-certification-challenge)
+Author: Aneeta Xavier · Due: July 16, 2026
+· [GitHub repo](https://github.com/Aneeta-Xavier/barre-certification-challenge)
+· **[Live app](https://barre-certification-challenge.onrender.com)**
 
 > **This single document contains everything.** Part I answers all seven
 > certification tasks (the graded deliverables). Part II is the product depth
@@ -273,7 +275,7 @@ chainlit run app.py             # open http://localhost:8000 on phone or laptop
 **Deploy (public endpoint):** the FAISS index + corpus are committed, so the
 Docker image deploys to **Render** with only the 3 API keys as secret env vars —
 full steps in [`DEPLOY.md`](DEPLOY.md). Result: a public HTTPS chat URL that works
-on phone and laptop. *(Live URL: **`<paste after deploy>`**.)*
+on phone and laptop. **Live app: https://barre-certification-challenge.onrender.com**
 
 ---
 
