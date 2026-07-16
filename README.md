@@ -4,8 +4,9 @@ An **Agentic RAG** assistant for **barre core training** — standing and floor
 abdominal/oblique barre work: cues, form, progressions, modifications, and the
 anatomy behind each move. Ask it in any phone or laptop browser.
 
-Built for the AI Makerspace **Certification Challenge**. Full write-up (Tasks 1–7,
-diagrams, eval methodology): **[`docs/WRITEUP.md`](docs/WRITEUP.md)**.
+Built for the AI Makerspace **Certification Challenge**. 📄 **Full submission
+document** (all 7 tasks, diagrams, eval numbers, product depth):
+**[`docs/SUBMISSION.md`](docs/SUBMISSION.md)**.
 
 > ⚕️ Fitness education, not medical advice. For injury, pregnancy, or
 > diastasis-recti concerns, see a qualified professional.
@@ -59,5 +60,6 @@ rag/agent.py           Agent: OpenRouter gateway + KB tool + Tavily + memory
 rag/retriever.py       Baseline (dense) and advanced (hybrid+rerank) retrievers
 data/barre_sources.py  Curated barre-CORE videos, guides, PDF list
 eval/                  RAGAS test-set generator + baseline-vs-advanced harness
-docs/WRITEUP.md        Certification write-up (Tasks 1–7) with diagrams
+docs/SUBMISSION.md     ⭐ Full submission — all 7 tasks, diagrams, results
+docs/DEPLOY.md         Render deploy steps
 ```

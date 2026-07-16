@@ -1,14 +1,44 @@
-# Barre Core Coach — Certification Challenge Write-up
+# Barre Core Coach — Certification Challenge Submission
 
 **An Agentic RAG assistant for barre *core* training.**
-Author: Aneeta Xavier · Due: July 16, 2026
+Author: Aneeta Xavier · Due: July 16, 2026 · [GitHub repo](https://github.com/Aneeta-Xavier/barre-certification-challenge)
 
-> This document addresses all seven tasks. The application is a Chainlit chat app
-> (`app.py`) that runs in any phone or laptop browser and deploys to a public
-> HTTPS endpoint. All model calls route through the **OpenRouter** LLM gateway;
-> conversation **memory** is kept per browser session.
+> **This single document contains everything.** Part I answers all seven
+> certification tasks (the graded deliverables). Part II is the product depth
+> (market, guardrails, roadmap, risks). The app is a Chainlit chat app (`app.py`)
+> that runs in any phone/laptop browser and deploys to a public HTTPS endpoint;
+> all model calls route through the **OpenRouter** LLM gateway, with per-session
+> **memory**.
+
+**Where each deliverable lives:**
+
+| Task | Deliverables | Section |
+|---|---|---|
+| 1 | Problem, why, current-workflow diagram, eval questions | [Task 1](#task-1--problem-audience-and-scope) |
+| 2 | Solution, infra diagram, agent-flow diagram, gateway/memory/browser | [Task 2](#task-2--proposed-solution) |
+| 3 | Data sources, chunking strategy | [Task 3](#task-3--dealing-with-the-data) |
+| 4 | End-to-end prototype + public deploy | [Task 4](#task-4--end-to-end-agentic-rag-prototype) |
+| 5 | Test set, eval harness, conclusions | [Task 5](#task-5--evaluation) |
+| 6 | Advanced retriever, comparison table, 2nd improvement | [Task 6](#task-6--improving-the-prototype) |
+| 7 | Next steps | [Task 7](#task-7--next-steps-demo-day) |
 
 ---
+
+## Executive Summary
+The **Barre Core Coach** is an AI-powered assistant that makes barre **core**
+training — the standing and floor abdominal/oblique work at the heart of every
+barre class — accessible and personalized at home. Barre is a popular low-impact
+modality for core strength and posture, but studio access is expensive and
+time-bound and the online alternatives are unsearchable video libraries. This
+project delivers an **agentic Retrieval-Augmented Generation** system that gives
+grounded, safety-aware, on-demand answers about barre-core form, cues,
+progressions, and anatomy — a studio-quality "ask the instructor" experience in a
+browser.
+
+---
+---
+
+# Part I — Certification Deliverables
 
 ## Task 1 — Problem, Audience, and Scope
 
@@ -194,16 +224,20 @@ natural cue boundaries rather than mid-word. (For the advanced retriever we also
 build a BM25 index over the *same* chunks so lexical and dense retrieval stay
 aligned.)
 
-### 2. Data source + external API, and how they interact
+### 2. Data sources + external API, and how they interact
 
-**Private data (RAG):** a barre-**core** corpus assembled by `ingest.py` from
-three source types (see `data/barre_sources.py`):
-1. **YouTube barre-core transcripts** — categorized `barre_core_floor` and
-   `barre_core_standing` workouts (captions fetched when available).
-2. **Written barre-core workout guides** — full-text articles (reliable fallback
-   so the corpus is never thin even when captions fail).
-3. **Instructor manuals & core-anatomy PDFs** — dropped in `data/pdfs/`
-   (e.g. a publicly posted BootyBarre manual, a core-anatomy reference).
+**Private data (RAG):** a barre-**core** corpus assembled by `ingest.py`
+(see `data/barre_sources.py`) — **14 documents / 958 chunks**:
+1. **Written barre-core workout guides** — full-text articles on standing and
+   floor core work.
+2. **Pilates-core form / cue / anatomy articles** — the powerhouse, transverse
+   abdominis, Pilates terminology, the Hundred, core cueing (barre core derives
+   from the Pilates-fusion layer; these enrich cue + anatomy vocabulary).
+3. **Pilates instructor manuals** — two text-extractable course manuals (86 + 216
+   pages) placed in `data/pdfs/`.
+4. **YouTube barre-core transcripts** — categorized floor/standing workouts,
+   fetched when captions are available (frequently blocked; the guides + manuals
+   are the reliable backbone).
 
 **External API (Agent):** **Tavily** web search, exposed as the `web_search`
 tool.
@@ -213,9 +247,7 @@ primary, trusted ground truth** and **Tavily as the fallback / freshness layer.*
 For technique/anatomy questions it retrieves from FAISS and answers from the
 corpus. When retrieval is insufficient or the question is about current/external
 facts (new classes, gear, recent research), it calls Tavily, then synthesizes an
-answer that labels which source each part came from. This keeps answers grounded
-and barre-specific by default, while still covering the long tail the static
-corpus can't.
+answer that labels which source each part came from.
 
 ---
 
@@ -226,7 +258,7 @@ corpus can't.
 | Piece | File |
 |-------|------|
 | Data ingestion → FAISS | [`ingest.py`](../ingest.py) |
-| Retrievers (baseline + advanced) | [`rag/retriever.py`](../rag/retriever.py) |
+| Retrievers (baseline / advanced / advanced_tuned) | [`rag/retriever.py`](../rag/retriever.py) |
 | Agent (gateway + tools + memory) | [`rag/agent.py`](../rag/agent.py) |
 | Chat app (browser UI) | [`app.py`](../app.py) |
 
@@ -238,10 +270,10 @@ python ingest.py                # build data/faiss_index/
 chainlit run app.py             # open http://localhost:8000 on phone or laptop
 ```
 
-**Deploy (public endpoint):** commit `data/faiss_index/` + `data/combined_data.json`,
-then deploy the Docker image via `render.yaml` (Render) — set the three API keys
-as secret env vars. Result: a public HTTPS chat URL that works on phone and
-laptop. *(Live URL: **`<paste after deploy>`**.)*
+**Deploy (public endpoint):** the FAISS index + corpus are committed, so the
+Docker image deploys to **Render** with only the 3 API keys as secret env vars —
+full steps in [`DEPLOY.md`](DEPLOY.md). Result: a public HTTPS chat URL that works
+on phone and laptop. *(Live URL: **`<paste after deploy>`**.)*
 
 ---
 
@@ -249,8 +281,8 @@ laptop. *(Live URL: **`<paste after deploy>`**.)*
 
 ### 1. Test data set
 Synthetic golden set generated from the barre-core corpus with RAGAS
-(`eval/generate_testset.py`, ~12 `{user_input, reference}` pairs), complemented
-by the hand-written questions in Task 1.
+(`eval/generate_testset.py`, 12 `{user_input, reference}` pairs), complemented by
+the hand-written questions in Task 1.
 
 ### 2. Evaluation harness
 `eval/run_ragas.py` runs each golden question through a chosen retriever, collects
@@ -260,13 +292,12 @@ Noise Sensitivity — with the evaluator LLM routed through the gateway.
 
 ```bash
 python eval/generate_testset.py --size 12
-python eval/run_ragas.py baseline
+python eval/run_ragas.py compare
 ```
 
 ### 3. Baseline results & conclusions
 Measured on the 12-question golden set against the full **14-document / 958-chunk**
-corpus (barre guides + Pilates-core form/anatomy articles + 2 Pilates instructor
-manuals), dense-only FAISS retriever, k=5:
+corpus, dense-only FAISS retriever, k=5:
 
 | Metric | Baseline (dense-only) |
 | --- | --- |
@@ -279,12 +310,11 @@ manuals), dense-only FAISS retriever, k=5:
 
 **Conclusions.** Answers are **on-topic (Relevancy 0.80) and well-grounded
 (Faithfulness 0.82)**. The weak spots are **Factual Correctness (0.46)** and
-**Noise Sensitivity (0.42)** — with a large, mixed corpus (958 chunks spanning
+**Noise Sensitivity (0.42)** — with a large mixed corpus (958 chunks spanning
 short workout blurbs and dense 216-page manuals), the dense retriever pulls in
-loosely-related chunks that dilute precision and let a few unsupported claims
-through. Context Recall (0.66) shows the right chunks are *usually* retrieved, so
-the core issue is **precision/noise, not missing information** — exactly what the
-Task 6 rerank step targets.
+loosely-related chunks that dilute precision. Context Recall (0.66) shows the
+right chunks are *usually* retrieved, so the core issue is **precision/noise, not
+missing information** — exactly what the Task 6 rerank step targets.
 
 *(For reference, last year's reformer baseline on the same harness scored far
 lower — Context Recall 0.37, Faithfulness 0.59 — because that corpus leaned on
@@ -298,17 +328,12 @@ noisy auto-captions.)*
 **Hybrid retrieval (BM25 + dense ensemble) followed by a FlashRank cross-encoder
 rerank.** Barre cues mix *exact* anatomical vocabulary ("transverse abdominis,"
 "C-curve," "posterior pelvic tilt") with paraphrased instruction; BM25 recovers
-the exact-term matches a pure embedding model misses, the dense arm catches
-semantic paraphrase, and the cross-encoder reranker promotes the chunk that
-actually answers the question to the top — directly attacking the baseline's low
-context recall.
+exact-term matches a pure embedding model misses, the dense arm catches semantic
+paraphrase, and the cross-encoder reranker promotes the chunk that actually
+answers the question — directly attacking the baseline's precision/noise problem.
 
-### 2. Performance comparison
-```bash
-python eval/run_ragas.py compare     # prints baseline vs advanced side by side
-```
-
-Measured on the same 12-question golden set (958-chunk corpus):
+### 2. Performance comparison (baseline vs advanced)
+Same 12 questions, 958-chunk corpus:
 
 | Metric | Baseline (dense) | Advanced (hybrid+rerank) | Δ |
 | --- | --- | --- | --- |
@@ -320,20 +345,17 @@ Measured on the same 12-question golden set (958-chunk corpus):
 | Context Entity Recall | **0.4949** | 0.3518 | −0.143 ❌ |
 
 **Honest read — a real tradeoff, not a clean win.** The hybrid + rerank retriever
-made answers **more factually correct, better-recalled, and much less noisy**
-(Noise Sensitivity −0.107, Factual Correctness +0.080). But it **lowered Answer
-Relevancy and Context Entity Recall**, because reranking a 12-candidate pool down
-to the top-5 over-trims: entity-rich chunks the dense retriever surfaced get
-dropped. We traded entity coverage for precision — the regression on entity
-recall is the lever for the next change.
+made answers **more factually correct, better-recalled, and much less noisy**,
+but it **lowered Answer Relevancy and Context Entity Recall**: reranking a
+12-candidate pool down to top-5 over-trims, dropping entity-rich chunks. The
+regression on entity recall is the lever for the next change.
 
-### 3. A second improvement (with evidence)
-**Retriever tuning driven by the eval above.** The comparison showed the rerank
-step was *over-trimming* — cutting entity-rich context. So the second change
-widens the funnel: a larger candidate pool and a larger reranked `top_n`
-(`candidate_k` 12 → 24, `k` 5 → 8) with the ensemble weighted slightly toward the
-dense arm, exposed as the **`advanced_tuned`** retriever (`rag/retriever.py`).
-The hypothesis: recover Context/Entity Recall while keeping the grounding gains.
+### 3. Second improvement, with hard evidence (advanced → advanced_tuned)
+**Eval-driven retriever tuning.** The comparison *diagnosed* over-trimming, so the
+second change widens the funnel: `candidate_k` 12 → 24, reranked `k` 5 → 8,
+ensemble weighted toward the dense arm (the **`advanced_tuned`** retriever in
+`rag/retriever.py`). Hypothesis: recover entity/context recall while keeping the
+grounding gains.
 
 ```bash
 python eval/run_ragas.py advanced_tuned
@@ -348,18 +370,14 @@ python eval/run_ragas.py advanced_tuned
 | Answer Relevancy | 0.7450 | **0.7500** | +0.005 ✅ |
 | Noise Sensitivity (↓) | 0.3126 | 0.3144 | +0.002 ≈ |
 
-**Result — the hypothesis held.** Widening the retrieval funnel **recovered the
-entity recall the plain rerank had over-trimmed** (Entity Recall +0.094) *and*
-pushed **Faithfulness to 0.876 — the best of all three configurations** — while
-Context Recall, Factual Correctness, and Relevancy all ticked up and Noise
-Sensitivity stayed flat. `advanced_tuned` improves on `advanced` across every
-metric. This is the eval harness working as designed: the baseline-vs-advanced
-comparison *diagnosed* the regression, and a targeted, measured change fixed it.
-
-**Net baseline → advanced_tuned:** Faithfulness +0.053, Factual Correctness
-+0.094, Context Recall +0.077, Noise Sensitivity −0.105 (better) — a clearly
-more grounded, less noisy pipeline, at a small cost to raw Answer Relevancy.
-`advanced_tuned` is the shipped default (`rag/agent.py`).
+**Result — the hypothesis held.** Widening the funnel **recovered the entity
+recall the plain rerank over-trimmed** (+0.094) *and* pushed **Faithfulness to
+0.876 — the best of all three configurations** — with every other metric flat or
+up. This is the eval harness working as designed: the comparison diagnosed the
+regression, and a targeted, measured change fixed it. **Net baseline →
+advanced_tuned:** Faithfulness +0.053, Factual Correctness +0.094, Context Recall
++0.077, Noise Sensitivity −0.105 (better). `advanced_tuned` is the shipped
+default (`rag/agent.py`).
 
 ---
 
@@ -368,20 +386,113 @@ more grounded, less noisy pipeline, at a small cost to raw Answer Relevancy.
 **Keep:**
 - The **agentic RAG + Tavily fallback** shape — grounding first, web second, is
   the right trust model for a fitness-safety domain.
-- The **hybrid + rerank** retriever — biggest quality lever for the money.
+- The **hybrid + rerank (tuned)** retriever — biggest quality lever for the money.
 - **Chainlit + OpenRouter** — fast to ship, mobile-friendly, model-swappable.
 - The **RAGAS harness** — it turned "feels better" into measured deltas.
 
 **Change / improve:**
-- **Bigger, cleaner corpus:** more caption-verified core videos plus properly
-  licensed manuals; add per-chunk metadata (move name, standing vs floor,
-  difficulty) for filtered retrieval.
+- **Bigger, cleaner corpus:** caption-verified core videos + OCR'd instructor
+  manuals; per-chunk metadata (move name, standing vs floor, difficulty) for
+  filtered retrieval.
 - **Durable memory:** move from per-session history to a lightweight store so the
   app remembers a returning user's injuries/level across visits.
-- **Structured outputs:** return sequences as step lists with reps/tempo and
-  optional links back to the source video timestamp.
-- **Safety guardrail eval:** an explicit LLM-as-judge check that
-  injury/pregnancy answers always include the safety note and a
-  see-a-professional nudge.
-- **Cost/latency:** cache embeddings and rerank calls; consider a smaller
-  reranker for mobile latency.
+- **Structured outputs:** sequences as step lists with reps/tempo and links back
+  to the source video timestamp.
+- **Safety guardrail eval:** an LLM-as-judge check that injury/pregnancy answers
+  always include the safety note.
+- **Cost/latency:** cache embeddings and rerank; smaller reranker for mobile.
+
+---
+---
+
+# Part II — Product Depth (bonus)
+
+## Market context
+Barre — built from ballet, Pilates, and isometric strength work — is a durable
+boutique-fitness segment, heavily women aged 25–45 who value posture and core
+strength. At-home platforms (Peloton, Alo Moves, Apple Fitness+) prove this
+demographic adopts digital fitness, yet demand meets barriers: studio memberships
+run **$150–$250/month**, prime class times book up, and at-home barre is *video*
+you cannot ask a question. *(Directional market analysis, not completed user
+research; it builds on prior work exploring an AI at-home fitness assistant.)*
+
+## Consumer pain points
+1. **No personalization mid-class** — group classes can't correct each person's
+   form; modifications for injuries or diastasis recti are rarely addressed.
+2. **Digital alternatives fall short** — YouTube barre has no search; generic apps
+   give "barre-inspired" routines without cue-level guidance.
+3. **Safety concerns** — without form cues, users risk lumbar strain; online
+   content rarely flags contraindications for postpartum/injured users.
+4. **Scattered knowledge** — answers live across transcripts, blogs, and dense
+   manuals, never in one searchable place.
+
+## Competitive landscape
+| Platform | Strengths | Weaknesses |
+|---|---|---|
+| YouTube (free) | Huge library | No personalization, no search, no grounding |
+| Peloton / Apple Fitness+ | Community + polish | Barre is a minor category; no Q&A |
+| Alo Moves | Premium niche instructors | Video only; no adaptive answers |
+| Local studios | Hands-on correction | Expensive; limited access |
+
+**Gap:** a digital-first, barre-core-specific assistant that *answers questions*
+with grounded, safety-aware guidance at a fraction of studio cost.
+
+## Value proposition
+Grounded form cues and expert-backed answers at a fraction of studio cost,
+reducing barriers of expense, geography, and inconsistent instruction while
+increasing confidence, safety, and habit formation. **Pricing direction:**
+freemium for discovery; **$12–18/month** premium — roughly 5–10× cheaper than
+studio memberships.
+
+## Guardrails & Responsible AI
+A barre-core coach is a **safety-critical** domain; guardrails are core, not
+optional.
+
+| Guardrail | Implementation | Purpose |
+|---|---|---|
+| Hallucination mitigation | RAG grounding; answer from retrieved context | Prevent fabricated cues |
+| Scope restriction | System prompt keeps it to barre core; declines off-topic | Clear boundaries |
+| Safety disclaimers | Mandatory note for injury/pregnancy/diastasis + "see a professional" | Avoid harm |
+| Context awareness | Prompts for injury/level where relevant | Personalization |
+| Source transparency | Every answer labels 📚 KB / 🌐 web | Trust |
+| Human-in-the-loop (future) | Instructor review of golden answers; thumbs up/down | External validation |
+
+## Risk register
+| Risk | Likelihood | Impact | Mitigation |
+|---|---|---|---|
+| Retrieval misses/dilutes context | Medium | High | Hybrid+rerank (done), corpus growth, per-chunk metadata |
+| Unsafe movement/modification advice | Low | High | Grounding, mandatory safety note, future instructor review |
+| Users substitute it for medical advice | Medium | High | Disclaimers, "see a professional" nudges |
+| Corpus copyright / licensing | Medium | Medium | Use public-domain / freely-posted / owned materials only |
+| Scanned-PDF sources unreadable | — | Low | OCR pipeline (future); text sources prioritized now |
+
+## FAQ
+**How is this different from YouTube or a fitness app?** It *answers questions*
+with grounded, barre-core-specific guidance and labels its sources.
+**Why FAISS not Pinecone?** Cost-free local prototyping that ships in the
+container; a managed DB is a scale-time option.
+**How does it handle injuries / postpartum?** Prompts for context, adds a safety
+note, recommends a professional; final medical clearance is the user's.
+**What if it hallucinates?** Answers are grounded in retrieved context;
+out-of-corpus questions route to labeled web search; LLM-as-judge moderation is a
+future guardrail.
+
+---
+
+## Appendix — implementation reference
+**Chunking parameters**
+
+| Parameter | Value | Notes |
+|---|---|---|
+| Chunk size | 800 | Keeps a full cue/exercise block intact |
+| Overlap | 50 | Continuity across boundaries |
+| Retriever k (baseline / advanced) | 5 | Configurable |
+| Retriever k / candidate_k (tuned) | 8 / 24 | Task 6.3 second improvement |
+
+**System prompt** (`SYSTEM_PROMPT` in `rag/agent.py`): constrains scope to barre
+core, forces `barre_core_kb` first, requires grounding, mandates a safety note for
+injury/pregnancy/diastasis, keeps answers tight and actionable.
+
+**Repo:** [github.com/Aneeta-Xavier/barre-certification-challenge](https://github.com/Aneeta-Xavier/barre-certification-challenge)
+· code in `app.py`, `ingest.py`, `rag/`, `eval/` · deploy steps in
+[`DEPLOY.md`](DEPLOY.md).
