@@ -154,7 +154,7 @@ flowchart LR
 | Embedding model | OpenAI `text-embedding-3-small` | Cheap, high-quality 1536-d embeddings; embeddings run direct-to-OpenAI since gateways don't proxy them. |
 | Vector database | FAISS (local, persisted) | Zero-ops, fast, file-based index that ships inside the container — no external DB to run for a single-corpus app. |
 | Advanced retriever | BM25 + dense **ensemble** → FlashRank rerank | Lexical + semantic recall then cross-encoder precision, deployable with no GPU (Task 6). |
-| Monitoring | Chainlit run traces + LangChain callbacks | Per-turn visibility into tool calls and latency in the Chainlit UI. |
+| Monitoring | **LangSmith** (+ Chainlit run traces) | Auto-traces every agent run, tool call, retrieval, and token when the LangChain env vars are set — full request-level observability. |
 | Evaluation | RAGAS | Purpose-built RAG metrics (faithfulness, context recall, relevancy) for baseline-vs-advanced comparison. |
 | User interface | Chainlit | Production chat UI that runs in mobile + desktop browsers with built-in session memory and streaming. |
 | Deployment | Docker → Render (public HTTPS) | Container runs Chainlit anywhere; Render gives a public endpoint with secret env vars. |

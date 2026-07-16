@@ -20,3 +20,10 @@ services:
         value: text-embedding-3-small
       - key: OPENROUTER_BASE_URL
         value: https://openrouter.ai/api/v1
+      # Monitoring (LangSmith) — optional; set LANGCHAIN_API_KEY to enable tracing.
+      - key: LANGCHAIN_TRACING_V2
+        value: "true"
+      - key: LANGCHAIN_API_KEY
+        sync: false
+      - key: LANGCHAIN_PROJECT
+        value: barre-core-coach
