@@ -19,7 +19,8 @@ from rag.agent import build_agent
 load_dotenv()
 
 # Build the agent once (loads FAISS + BM25); memory is per-session below.
-AGENT = build_agent(retriever_mode="advanced")
+# advanced_tuned is the best-scoring retriever in the eval harness (Task 6.3).
+AGENT = build_agent(retriever_mode="advanced_tuned")
 
 WELCOME = (
     "👋 **Barre Core Coach** — your barre core & abs specialist.\n\n"

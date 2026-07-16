@@ -19,7 +19,8 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
-from rag.retriever import get_retriever
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from rag.retriever import get_retriever  # noqa: E402
 
 load_dotenv()
 

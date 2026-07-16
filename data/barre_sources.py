@@ -17,11 +17,22 @@ YouTube transcript never breaks the corpus.
 # 1. Written barre-core workout guides (reliable, full-text)
 # ---------------------------------------------------------------------------
 GUIDE_URLS = [
+    # --- Barre-core workout guides ---
     "https://www.nourishmovelove.com/10-minute-barre-core-workout/",
     "https://www.nourishmovelove.com/barre-class-workout-video/",
     "https://tgffitness.com/workouts/10-minute-barre-abs-workout/",
     "https://evergreenclinic.ca/a-complete-guide-to-barre-pilates/",
     "https://la-pilatesstudio.com/what-is-barre-pilates/",
+    # --- Pilates-core FORM / CUE / ANATOMY references (barre core derives from
+    #     the Pilates-fusion layer; these enrich cue + anatomy vocabulary and
+    #     directly target Context Entity Recall). Freely-accessible articles. ---
+    "https://ghrippys.com/blogs/articles/decoding-the-language-of-pilates-common-terms-and-phrases-explained",
+    "https://good-pilates.com/the-powerhouse-not-just-core",
+    "https://www.myacademy.pro/post/understanding-the-core-and-cueing-evolution-in-pilates",
+    "https://www.healthline.com/health/fitness/pilates-exercises",
+    "https://lindywell.com/pilates-beginners-part-two-transverse-abdominis/",
+    "https://www.elliehermanpilates.com/ellies-blog/demystifying-the-core",
+    "https://weareformfitness.com/training/pilates/the-hundred/",
 ]
 
 # ---------------------------------------------------------------------------

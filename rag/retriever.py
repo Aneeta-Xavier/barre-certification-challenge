@@ -61,7 +61,7 @@ def get_baseline_retriever(k: int = 5):
     return load_vectorstore().as_retriever(search_kwargs={"k": k})
 
 
-def get_advanced_retriever(k: int = 5, candidate_k: int = 12):
+def get_advanced_retriever(k: int = 5, candidate_k: int = 12, weights=(0.4, 0.6)):
     """Hybrid (BM25 + dense) union, cross-encoder reranked to top-k (Task 6)."""
     from langchain.retrievers import ContextualCompressionRetriever, EnsembleRetriever
     from langchain_community.retrievers import BM25Retriever
@@ -72,7 +72,7 @@ def get_advanced_retriever(k: int = 5, candidate_k: int = 12):
     bm25 = BM25Retriever.from_documents(load_chunks())
     bm25.k = candidate_k
 
-    hybrid = EnsembleRetriever(retrievers=[bm25, dense], weights=[0.4, 0.6])
+    hybrid = EnsembleRetriever(retrievers=[bm25, dense], weights=list(weights))
 
     reranker = FlashrankRerank(top_n=k)
     return ContextualCompressionRetriever(
@@ -81,7 +81,14 @@ def get_advanced_retriever(k: int = 5, candidate_k: int = 12):
 
 
 def get_retriever(mode: str = "advanced", k: int = 5):
-    """Factory: mode in {'baseline', 'advanced'}."""
+    """Factory: mode in {'baseline', 'advanced', 'advanced_tuned'}.
+
+    advanced_tuned is the Task 6.3 second improvement: a wider candidate pool and
+    a larger reranked top_n, weighted toward the dense arm, to recover the
+    entity/context recall the plain 'advanced' retriever over-trimmed.
+    """
     if mode == "baseline":
         return get_baseline_retriever(k=k)
+    if mode == "advanced_tuned":
+        return get_advanced_retriever(k=8, candidate_k=24, weights=(0.3, 0.7))
     return get_advanced_retriever(k=k)
