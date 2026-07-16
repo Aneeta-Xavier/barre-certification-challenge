@@ -1,0 +1,22 @@
+# Render.com blueprint — deploy Barre Core Coach to a public HTTPS endpoint.
+# The pre-built FAISS index (data/faiss_index/) is committed, so the container
+# does not need to re-ingest on boot; it only needs the runtime API keys.
+services:
+  - type: web
+    name: barre-core-coach
+    runtime: docker
+    plan: starter
+    healthCheckPath: /
+    envVars:
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: TAVILY_API_KEY
+        sync: false
+      - key: CHAT_MODEL
+        value: openai/gpt-4.1-mini
+      - key: EMBED_MODEL
+        value: text-embedding-3-small
+      - key: OPENROUTER_BASE_URL
+        value: https://openrouter.ai/api/v1
